@@ -1,0 +1,5 @@
+{
+  "name": "Renault Pre-Owned Showcase",
+  "description": "A web application that showcases pre-owned Renault vehicles for sale, inspired by the official Renault Malaysia website. Users can browse available cars, see their details, and learn about the benefits of the pre-owned program.",
+  "requestFramePermissions": []
+}

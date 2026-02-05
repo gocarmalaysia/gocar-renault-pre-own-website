@@ -1,0 +1,56 @@
+<section class="py-12">
+  <div class="container mx-auto px-4 sm:px-6 lg:px-8">
+    
+    <!-- Filter Bar -->
+    <div class="bg-gray-700 p-4 rounded-lg mb-8">
+      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
+        <!-- Status Dropdown -->
+        <div class="relative">
+          <select (change)="onStatusChange($event)" class="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+            <option value="All">Status (All)</option>
+            <option>Available</option>
+            <option>Booked</option>
+            <option>Sold</option>
+          </select>
+        </div>
+        <!-- Model Dropdown -->
+        <div class="relative">
+          <select (change)="onModelChange($event)" class="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+            @for(model of models(); track model) {
+              <option [value]="model">{{ model === 'All' ? 'Model (All)' : model }}</option>
+            }
+          </select>
+        </div>
+        <!-- Location Dropdown -->
+        <div class="relative">
+          <select (change)="onLocationChange($event)" class="w-full bg-white border border-gray-300 rounded-md py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+            @for(location of locations(); track location) {
+              <option [value]="location">{{ location === 'All' ? 'Location (All)' : location }}</option>
+            }
+          </select>
+        </div>
+        <!-- Sort By Dropdown -->
+        <div class="relative">
+          <select (change)="onSortChange($event)" class="w-full bg-gray-600 border border-gray-500 text-white rounded-md py-2 px-3 leading-tight focus:outline-none focus:ring-2 focus:ring-yellow-400 focus:border-transparent">
+            <option value="Default">Sort By</option>
+            <option>Price: Low to High</option>
+            <option>Price: High to Low</option>
+            <option>Year: Newest</option>
+          </select>
+        </div>
+      </div>
+    </div>
+
+    <div class="space-y-5">
+      @for (car of filteredCars(); track car.registrationNo) {
+        <app-car-card [car]="car"></app-car-card>
+      }
+      @if (filteredCars().length === 0) {
+        <div class="bg-white rounded-xl shadow-lg p-8 text-center text-gray-500">
+          <h3 class="text-xl font-semibold mb-2">No cars match your criteria</h3>
+          <p>Please try adjusting your filters or check back later.</p>
+        </div>
+      }
+    </div>
+  </div>
+</section>

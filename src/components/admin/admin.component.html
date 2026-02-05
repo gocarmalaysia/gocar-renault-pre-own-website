@@ -1,0 +1,58 @@
+
+<div class="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+  <div class="flex justify-between items-center mb-8">
+    <h1 class="text-3xl font-bold text-gray-800">Manage Car Listings</h1>
+    <a routerLink="/admin/new" class="bg-yellow-500 text-black font-bold py-2 px-4 rounded-lg hover:bg-yellow-600 transition-colors duration-300 flex items-center">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-2" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd" />
+      </svg>
+      Add New Car
+    </a>
+  </div>
+
+  <div class="bg-white rounded-xl shadow-lg overflow-x-auto">
+    <table class="w-full text-sm text-left text-gray-500">
+      <thead class="text-xs text-gray-700 uppercase bg-gray-50">
+        <tr>
+          <th scope="col" class="px-6 py-3">Image</th>
+          <th scope="col" class="px-6 py-3">Name</th>
+          <th scope="col" class="px-6 py-3">Year</th>
+          <th scope="col" class="px-6 py-3">Price</th>
+          <th scope="col" class="px-6 py-3">Status</th>
+          <th scope="col" class="px-6 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        @for (car of cars(); track car.registrationNo) {
+          <tr class="bg-white border-b hover:bg-gray-50">
+            <td class="px-6 py-4">
+              <img [ngSrc]="car.imageUrls[0]" [alt]="car.name" width="80" height="60" class="w-20 h-auto object-cover rounded">
+            </td>
+            <th scope="row" class="px-6 py-4 font-medium text-gray-900 whitespace-nowrap">
+              {{ car.name }}
+              <span class="block text-xs text-gray-500 font-normal">{{car.registrationNo}}</span>
+            </th>
+            <td class="px-6 py-4">{{ car.year }}</td>
+            <td class="px-6 py-4">RM {{ car.price.toLocaleString() }}</td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 text-xs font-medium rounded-full" [class]="car.status === 'Available' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'">
+                {{ car.status }}
+              </span>
+            </td>
+            <td class="px-6 py-4 text-right space-x-2">
+              <button (click)="editCar(car.registrationNo)" class="font-medium text-yellow-600 hover:underline">Edit</button>
+              <button (click)="deleteCar(car.registrationNo, car.name)" class="font-medium text-red-600 hover:underline">Delete</button>
+            </td>
+          </tr>
+        }
+        @if (cars().length === 0) {
+          <tr>
+            <td colspan="6" class="px-6 py-12 text-center text-gray-500">
+              No cars found. Click "Add New Car" to get started.
+            </td>
+          </tr>
+        }
+      </tbody>
+    </table>
+  </div>
+</div>
