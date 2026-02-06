@@ -2,6 +2,7 @@
 import { Injectable, signal, computed } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom } from 'rxjs';
+import { environment } from '../environments/environment';
 
 export interface Car {
   id?: number;
@@ -34,7 +35,7 @@ interface ApiResponse<T> {
 
 @Injectable({ providedIn: 'root' })
 export class CarService {
-  private readonly apiUrl = 'http://34.70.147.133:8061/public/cars';
+  private readonly apiUrl = `${environment.apiUrl}${environment.apiPrefix}/cars`;
   private cars = signal<Car[]>([]);
   private loading = signal<boolean>(false);
 

@@ -3,6 +3,7 @@ import { CommonModule, NgOptimizedImage } from '@angular/common';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { Car, CarService } from '../../services/car.service';
+import { EnquiryService } from '../../services/enquiry.service';
 
 @Component({
   selector: 'app-enquiry-form',
@@ -14,6 +15,7 @@ export class EnquiryFormComponent implements OnInit {
   private fb = inject(FormBuilder);
   private route = inject(ActivatedRoute);
   private carService = inject(CarService);
+  private enquiryService = inject(EnquiryService);
   private router = inject(Router);
 
   car = signal<Car | undefined>(undefined);
@@ -34,27 +36,44 @@ export class EnquiryFormComponent implements OnInit {
     marketing: [false]
   });
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const regNo = this.route.snapshot.paramMap.get('regNo');
     if (regNo) {
-      this.car.set(this.carService.getCarByRegNo(regNo));
+      const car = await this.carService.getCarByRegNo(regNo);
+      if (car) {
+        this.car.set(car);
+      }
     }
   }
 
-  onSubmit(): void {
+  async onSubmit(): Promise<void> {
     if (this.enquiryForm.invalid) {
       this.enquiryForm.markAllAsTouched();
       return;
     }
-    
-    this.isSubmitting.set(true);
-    console.log('Enquiry submitted:', this.enquiryForm.value);
 
-    // Simulate a short delay for API call to show loading state
-    setTimeout(() => {
+    this.isSubmitting.set(true);
+
+    try {
+      const formData = {
+        name: this.enquiryForm.value.name!,
+        email: this.enquiryForm.value.email!,
+        phone: this.enquiryForm.value.phone!,
+        state: this.enquiryForm.value.state!,
+        pdpa: this.enquiryForm.value.pdpa!,
+        marketing: this.enquiryForm.value.marketing!
+      };
+
+      const carId = this.car()?.id;
+      await this.enquiryService.submitEnquiry(formData, carId);
+
       const regNo = this.car()?.registrationNo;
       this.router.navigate(['/thank-you'], { queryParams: { regNo } });
-    }, 500);
+    } catch (error) {
+      console.error('Failed to submit enquiry:', error);
+      alert('Failed to submit enquiry. Please try again.');
+      this.isSubmitting.set(false);
+    }
   }
 
   formatPrice(price: number): string {

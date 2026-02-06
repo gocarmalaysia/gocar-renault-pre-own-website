@@ -15,10 +15,13 @@ export class ThankYouComponent implements OnInit {
 
   car = signal<Car | undefined>(undefined);
 
-  ngOnInit(): void {
+  async ngOnInit(): Promise<void> {
     const regNo = this.route.snapshot.queryParamMap.get('regNo');
     if (regNo) {
-      this.car.set(this.carService.getCarByRegNo(regNo));
+      const car = await this.carService.getCarByRegNo(regNo);
+      if (car) {
+        this.car.set(car);
+      }
     }
   }
 }
