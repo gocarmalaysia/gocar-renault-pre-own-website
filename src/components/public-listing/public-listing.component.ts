@@ -1,7 +1,6 @@
 
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { CommonModule, NgOptimizedImage } from '@angular/common';
-import { RouterLink } from '@angular/router';
+import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, signal } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 import { CarCardComponent } from '../car-card/car-card.component';
 import { Car, CarService } from '../../services/car.service';
@@ -9,13 +8,13 @@ import { Car, CarService } from '../../services/car.service';
 @Component({
   selector: 'app-public-listing',
   templateUrl: './public-listing.component.html',
-  imports: [CommonModule, NgOptimizedImage, CarCardComponent, RouterLink],
+  imports: [CommonModule, CarCardComponent],
   changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class PublicListingComponent {
   private carService = inject(CarService);
 
-  private cars = this.carService.getAllCars;
+  private allCars = this.carService.getAllCars; // For dropdown options
 
   // Signals for filter and sort state
   selectedStatus = signal('All');
@@ -23,40 +22,93 @@ export class PublicListingComponent {
   selectedLocation = signal('All');
   sortBy = signal('Default');
 
+  // API-based filtered cars
+  filteredCars = signal<Car[]>([]);
+  totalCars = signal(0);
+  currentPage = signal(1);
+  readonly PAGE_SIZE = 10;
+  isLoadingMore = signal(false);
+
   // Computed signals for dynamic dropdown options
-  models = computed(() => ['All', ...Array.from(new Set(this.cars().map(c => c.name)))]);
-  locations = computed(() => ['All', ...Array.from(new Set(this.cars().map(c => c.location)))]);
+  models = computed(() => ['All', ...Array.from(new Set(this.allCars().map(c => c.name)))]);
+  locations = computed(() => ['All', ...Array.from(new Set(this.allCars().map(c => c.location)))]);
 
-  // Computed signal for filtered and sorted cars
-  filteredCars = computed(() => {
-    let cars = this.cars();
+  isLoading = this.carService.isLoading;
 
-    // Filtering logic
-    if (this.selectedStatus() !== 'All') {
-      cars = cars.filter(c => c.status === this.selectedStatus());
-    }
-    if (this.selectedModel() !== 'All') {
-      cars = cars.filter(c => c.name === this.selectedModel());
-    }
-    if (this.selectedLocation() !== 'All') {
-      cars = cars.filter(c => c.location === this.selectedLocation());
-    }
-
-    // Sorting logic
-    switch (this.sortBy()) {
-      case 'Price: Low to High':
-        cars = [...cars].sort((a, b) => a.price - b.price);
-        break;
-      case 'Price: High to Low':
-        cars = [...cars].sort((a, b) => b.price - a.price);
-        break;
-      case 'Year: Newest':
-        cars = [...cars].sort((a, b) => b.year - a.year);
-        break;
-    }
-
-    return cars;
+  // Check if there are more cars to load
+  hasMoreCars = computed(() => {
+    return this.filteredCars().length < this.totalCars();
   });
+
+  constructor() {
+    // Load filtered cars whenever filters change
+    effect(() => {
+      // Track all filter dependencies
+      this.selectedStatus();
+      this.selectedModel();
+      this.selectedLocation();
+      this.sortBy();
+
+      // Reset and load cars
+      this.resetAndLoadCars();
+    });
+  }
+
+  // Scroll listener for infinite scroll
+  @HostListener('window:scroll')
+  onScroll(): void {
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const documentHeight = document.documentElement.scrollHeight;
+
+    // Load more when within 300px of bottom
+    if (scrollPosition >= documentHeight - 300 && this.hasMoreCars() && !this.isLoadingMore()) {
+      this.loadMore();
+    }
+  }
+
+  // Load filtered cars from API
+  private async loadFilteredCars(append: boolean = false): Promise<void> {
+    try {
+      if (append) {
+        this.isLoadingMore.set(true);
+      }
+
+      const result = await this.carService.getFilteredCars({
+        status: this.selectedStatus(),
+        model: this.selectedModel(),
+        location: this.selectedLocation(),
+        sortBy: this.sortBy(),
+        page: this.currentPage(),
+        limit: this.PAGE_SIZE
+      });
+
+      if (append) {
+        // Append to existing cars
+        this.filteredCars.update(cars => [...cars, ...result.cars]);
+      } else {
+        // Replace with new results
+        this.filteredCars.set(result.cars);
+      }
+
+      this.totalCars.set(result.total);
+    } catch (error) {
+      console.error('Error loading filtered cars:', error);
+    } finally {
+      this.isLoadingMore.set(false);
+    }
+  }
+
+  // Load more cars (next page)
+  loadMore(): void {
+    this.currentPage.update(page => page + 1);
+    this.loadFilteredCars(true);
+  }
+
+  // Reset and load cars from first page
+  private resetAndLoadCars(): void {
+    this.currentPage.set(1);
+    this.loadFilteredCars(false);
+  }
 
   // Event handlers for filter changes
   onStatusChange(event: Event): void {
