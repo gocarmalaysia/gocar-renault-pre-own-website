@@ -1,5 +1,5 @@
 
-import { ChangeDetectionStrategy, Component, computed, effect, HostListener, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 
 import { CarCardComponent } from '../car-card/car-card.component';
@@ -25,8 +25,8 @@ export class PublicListingComponent {
   // API-based filtered cars
   filteredCars = signal<Car[]>([]);
   totalCars = signal(0);
-  currentPage = signal(1);
-  readonly PAGE_SIZE = 10;
+  currentPage = 1;
+  readonly PAGE_SIZE = 20;
   isLoadingMore = signal(false);
 
   // Computed signals for dynamic dropdown options
@@ -49,36 +49,20 @@ export class PublicListingComponent {
       this.selectedLocation();
       this.sortBy();
 
-      // Reset and load cars
+      // Reset and load cars on filter change
       this.resetAndLoadCars();
     });
-  }
-
-  // Scroll listener for infinite scroll
-  @HostListener('window:scroll')
-  onScroll(): void {
-    const scrollPosition = window.innerHeight + window.scrollY;
-    const documentHeight = document.documentElement.scrollHeight;
-
-    // Load more when within 300px of bottom
-    if (scrollPosition >= documentHeight - 300 && this.hasMoreCars() && !this.isLoadingMore()) {
-      this.loadMore();
-    }
   }
 
   // Load filtered cars from API
   private async loadFilteredCars(append: boolean = false): Promise<void> {
     try {
-      if (append) {
-        this.isLoadingMore.set(true);
-      }
-
       const result = await this.carService.getFilteredCars({
         status: this.selectedStatus(),
         model: this.selectedModel(),
         location: this.selectedLocation(),
         sortBy: this.sortBy(),
-        page: this.currentPage(),
+        page: this.currentPage,
         limit: this.PAGE_SIZE
       });
 
@@ -100,13 +84,20 @@ export class PublicListingComponent {
 
   // Load more cars (next page)
   loadMore(): void {
-    this.currentPage.update(page => page + 1);
+    // Prevent multiple simultaneous load requests
+    if (this.isLoadingMore()) {
+      return;
+    }
+
+    this.isLoadingMore.set(true);
+    this.currentPage++;
     this.loadFilteredCars(true);
   }
 
   // Reset and load cars from first page
   private resetAndLoadCars(): void {
-    this.currentPage.set(1);
+    console.log('Filters changed, reloading cars...');
+    this.currentPage = 1;
     this.loadFilteredCars(false);
   }
 

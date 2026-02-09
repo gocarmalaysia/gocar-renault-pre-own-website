@@ -71,11 +71,14 @@
           <div class="inline-block animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-yellow-400"></div>
           <p class="text-gray-300 mt-2">Loading more cars...</p>
         } @else if (hasMoreCars()) {
-          <p class="text-gray-400 text-sm">
-            Scroll down to load more cars
-          </p>
+          <button
+            (click)="loadMore()"
+            class="bg-yellow-500 hover:bg-yellow-600 text-gray-900 font-semibold py-3 px-8 rounded-lg transition-all duration-300 shadow-lg hover:shadow-xl transform hover:-translate-y-0.5"
+          >
+            Load More Cars
+          </button>
         } @else {
-          <p class="text-green-400 text-sm">
+          <p class="text-green-400 text-sm font-medium">
             ✓ All cars loaded
           </p>
         }
